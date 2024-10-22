@@ -5,7 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const Auth = require('./authLogic')
 const auth = new Auth()
-const cors = require('cors')
+const cors = require('cors');
+const { console } = require('inspector');
 const app = express()
 const port = 3000
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -34,8 +35,10 @@ app.get('/', (req, res) => {
 
 })
 app.post('/register', upload.fields([{ name: 'image' }, { name: 'cv' }]), async (req, res) => {
-    if (!req.files || req.files.length === 0) {
-        return res.status(410).send('No files were uploaded.');
+
+    console.log(req.files)
+    if (!req.files || req.files.length === 0 || !req.files.cv ||!req.files.image) {
+        return res.status(415).send('No files were uploaded.');
     }
     console.log(req.body)
     pdfFile = req.files.cv[0]
@@ -45,7 +48,8 @@ app.post('/register', upload.fields([{ name: 'image' }, { name: 'cv' }]), async 
 
     const user = { ...req.body, cv: pdfPaths, image: imagePaths }
 
-    const registered = await auth.register(user)
+    const registered = await auth.register(req.body)
+    console.log(req.body)
     if (registered.ok) {
         res.status(200).send(
             {
@@ -55,19 +59,25 @@ app.post('/register', upload.fields([{ name: 'image' }, { name: 'cv' }]), async 
         )
     }
     else {
-        const imagePath = path.join(__dirname, 'uploads', image.filename);
-        const pdfPath = path.join(__dirname, 'uploads', pdfFile.filename)
-        fs.unlink(imagePath, (err) => {
-            if (err) {
-                return res.status(500).send('Error deleting file.');
-            }
-        });
-        fs.unlink(pdfPath, (err) => {
-            if (err) {
-                return res.status(500).send('Error deleting file.');
-            }
-        });
-        res.status(401).send(registered)
+        if (image) {
+            const imagePath = path.join(__dirname, 'uploads', image.filename);
+            fs.unlink(imagePath, (err) => {
+                if (err) {
+                    return res.status(500).send('Error deleting file.');
+                }
+            });
+        }
+        if (pdfFile) {
+            const pdfPath = path.join(__dirname, 'uploads', pdfFile.filename)
+
+            fs.unlink(pdfPath, (err) => {
+                if (err) {
+                    return res.status(500).send('Error deleting file.');
+                }
+            });
+        }
+
+        res.status(424).send(registered)
     }
 })
 
