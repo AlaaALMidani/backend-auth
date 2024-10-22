@@ -51,7 +51,7 @@ class Auth {
     }
     isExist(data, user) {
         return data.find((e) => e.email === user.email)
-    }
+    } 
     validate(user, users) {
         const errors = {};
 
