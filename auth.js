@@ -8,7 +8,7 @@ const Auth = require("./authLogic");
 const auth = new Auth();
 const app = express();
 const port = 3000;
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 app.use((req, res, next) => {
   console.log(req.method, req.url, new Date(), res.status);
@@ -37,7 +37,7 @@ const upload = multer({ storage: storage });
 
 app.get("/", (req, res) => {
   let data = [];
-  data = res.send(data);
+  data = res.send(data); 
 });
 app.post(
   "/register",
@@ -47,7 +47,7 @@ app.post(
     console.log(req.body)
     if (!req.files || req.files.length <= 1) {
       return res.status(401).send("No files were uploaded.");
-    }
+    } 
     let registered;
     let pdfFile;
     let image;
@@ -69,7 +69,7 @@ app.post(
       res.status(200).send({
         ok: true,
         message: "Welcome , you have been registered successfully",
-      });
+      }); 
 
     } else {
       if (image) {
@@ -96,11 +96,13 @@ app.post(
 );
 
 app.post("/login", async (req, res) => {
-  const user = await auth.login({
+  console.log(req.body)
+  const user = await auth.login({ 
     email: req.body.email,
     password: req.body.password,
   });
   user.ok ? res.status(201).send(user) : res.status(401).send(user);
+
 });
 
 app.listen(port, () => {

@@ -135,7 +135,7 @@ class Auth {
             userId: user.id, // Or a unique user identifier
             username: user.username,
             email: user.email,
-            phoneNumber: user.phoneNumber
+            phoneNumber: user.phoneNumber 
         };
 
         const options = {
