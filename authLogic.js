@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path')
 
+
 class User {
     constructor({ id, firstName, lastName, gender, phoneNumber, email, image, skills, address, token, password, cv }) {
         this.id = id
@@ -51,7 +52,7 @@ class Auth {
     }
     isExist(data, user) {
         return data.find((e) => e.email === user.email)
-    } 
+    }
     validate(user, users) {
         const errors = {};
 
@@ -89,26 +90,18 @@ class Auth {
             errors.username = 'Username can only contain alphanumeric characters, periods (.), and underscores (_).';
         }
 
-        // image (basic check)
+        // image (basic check) 
         if (user.image && typeof user.image !== 'string') {
             errors.image = 'Image must be a string (likely a path or URL).';
         }
 
         // skills (assuming it's an array of strings)
-        if (user.skills && (!Array.isArray(user.skills) || !user.skills.every(skill => typeof skill === 'string' && skill.trim() !== ''))) {
-            errors.skills = 'Skills must be an array of non-empty strings.';
+        if (!user.skills ) {
+            errors.skills = 'Skills field required!';
         }
 
-        // address (assuming it's an object - add more specific validation as needed)
-        if (user.address && typeof user.address !== 'object') {
-            errors.address = 'Address must be an object.';
-        } else if (user.address && typeof user.address === 'object') {
-            if (!user.address.street || typeof user.address.street !== 'string' || user.address.street.trim() === '') {
-                errors.address = errors.address ? errors.address + ', Street is required.' : 'Street is required.';
-            }
-            if (!user.address.city || typeof user.address.city !== 'string' || user.address.city.trim() === '') {
-                errors.address = errors.address ? errors.address + ', City is required.' : 'City is required.';
-            }
+        if (!user.address) {
+            errors.address = 'Address is required.';
         }
         const commonWeakPasswords = [
             'password', '123456', 'qwerty', '12345678', 'password123', '111111', '123123', '000000',
@@ -178,11 +171,10 @@ class Auth {
             const passwordMatch = await this.comparePassword(password, e.password);
             if (e.email === email && passwordMatch) {
                 console.log('matched')
-                return { ok: true, user: { password, ...e } }
+                return { ok: true, user: { ...e, password:'' } }
             }
         }
         return { ok: false, message: 'email or password isn\'t correct ' }
     }
 }
-module.exports = Auth 
- 
+module.exports = Auth

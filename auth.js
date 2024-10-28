@@ -8,7 +8,7 @@ const Auth = require("./authLogic");
 const auth = new Auth();
 const app = express();
 const port = 3000;
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use((req, res, next) => {
   console.log(req.method, req.url, new Date(), res.status);
@@ -17,6 +17,13 @@ app.use((req, res, next) => {
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 app.use(cors());
+const delayMiddleware = (req, res, next) => {
+  setTimeout(() => {
+    next(); 
+  }, 1000); 
+};
+
+app.use(delayMiddleware);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -35,22 +42,28 @@ app.get("/", (req, res) => {
 app.post(
   "/register",
   upload.fields([{ name: "image" }, { name: "cv" }]),
+
   async (req, res) => {
-    if (!req.files || req.files.length === 0) {
-      return res.status(410).send("No files were uploaded.");
+    console.log(req.body)
+    if (!req.files || req.files.length <= 1) {
+      return res.status(401).send("No files were uploaded.");
     }
-    pdfFile = req.files.cv[0];
-    image = req.files.image[0];
-    const pdfPaths = `${req.protocol}://${req.get("host")}/uploads/${
-      pdfFile.filename
-    }`;
-    const imagePaths = `${req.protocol}://${req.get("host")}/uploads/${
-      image.filename
-    }`;
+    let registered;
+    let pdfFile;
+    let image;
+    if (req.files.cv && req.files.image) {
+      let pdfFile = req.files.cv[0];
+      let image = req.files.image[0];
+      const pdfPaths = `${req.protocol}://${req.get("host")}/uploads/${pdfFile.filename
+        }`;
+      const imagePaths = `${req.protocol}://${req.get("host")}/uploads/${image.filename
+        }`;
 
-    const user = { ...req.body, cv: pdfPaths, image: imagePaths };
-
-    const registered = await auth.register(user);
+      const user = { ...req.body, cv: pdfPaths, image: imagePaths };
+      registered = await auth.register(user);
+    } else {
+      registered = await auth.register(req.body)
+    }
     if (registered.ok) {
 
       res.status(200).send({
@@ -63,7 +76,7 @@ app.post(
         const imagePath = path.join(__dirname, "uploads", image.filename);
         fs.unlink(imagePath, (err) => {
           if (err) {
-            return res.status(500).send("Error deleting file.");
+            return res.status(500).json("Error deleting file.");
           }
         });
       }
@@ -71,12 +84,13 @@ app.post(
         const pdfPath = path.join(__dirname, "uploads", pdfFile.filename);
         fs.unlink(pdfPath, (err) => {
           if (err) {
-            return res.status(500).send("Error deleting file.");
+            return res.status(500).json("Error deleting file.");
           }
         });
       }
 
-      res.status(400  ).send(registered);
+      res.status(402).send(registered);
+
     }
   }
 );
